@@ -53,7 +53,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
     private final List<String> messagesSent = new ArrayList<>();
 	private String endpointConnected = "";
 	private String receivedMessages = "";
-    private int eventNumber = 0;
+    private String eventNumber = "0";
 
     NearbyConnectionModule(ReactApplicationContext context) {
 
@@ -81,18 +81,21 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
     public void getReceivedMessage(Callback callback) {
         callback.invoke(receivedMessages);
     }
-    public void setEventNumber(int number) {
+    public void setEventNumber(String number) {
         this.eventNumber = number;
     }
+    public String getEventNumber () {
+        return eventNumber;
+    }
     @ReactMethod
-    public void getEventNumber(Callback callback) {
+    public void invokeEventNumber(Callback callback) {
         callback.invoke(eventNumber);
     }
     @ReactMethod
-	public void startDiscovering(final String adresse, final String timestampA) {
+	public void startDiscovering(final String adresse, final String timestampA, final Double localIncrementalIndex) {
 		DiscoveryOptions discoveryOptions = new DiscoveryOptions.Builder().setStrategy(STRATEGY).build();
 		ConnectionsClient connectionsClient = Nearby.getConnectionsClient(reactContext);
-		connectionsClient.startDiscovery(SERVICE_ID, getEndpointDiscoveryCallback(adresse, timestampA), discoveryOptions)
+		connectionsClient.startDiscovery(SERVICE_ID, getEndpointDiscoveryCallback(adresse, timestampA, localIncrementalIndex), discoveryOptions)
 				.addOnSuccessListener(unused -> {
                     WritableMap params= Arguments.createMap();
                     params.putString("property", "anydata");
@@ -105,7 +108,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
 					// Log.e("NearbyModule", "Failed to start discovery: " + e.getMessage());
 				});
 	}
-	private EndpointDiscoveryCallback getEndpointDiscoveryCallback(final String adresse, final String timestampA){
+	private EndpointDiscoveryCallback getEndpointDiscoveryCallback(final String adresse, final String timestampA, final Double localIncrementalIndex){
     	final EndpointDiscoveryCallback endpointDiscoveryCallback =
             new EndpointDiscoveryCallback() {
                 @Override
@@ -118,7 +121,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
                     Log.d("NearbyModule", "Endpoint found: " + endpointId);
                     
                     Nearby.getConnectionsClient(reactContext)
-                            .requestConnection(getLocalUserName(), endpointId, getconnectionLifecycleCallback(adresse, timestampA))
+                            .requestConnection(getLocalUserName(), endpointId, getconnectionLifecycleCallback(adresse, timestampA, localIncrementalIndex))
                             .addOnSuccessListener(
                                     (Void unused) -> {
                                         // We successfully requested a connection. Now both sides
@@ -144,7 +147,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
             };
 			return endpointDiscoveryCallback;
 		}
-			private ConnectionLifecycleCallback getconnectionLifecycleCallback(final String adresse, final String timestampA) {
+			private ConnectionLifecycleCallback getconnectionLifecycleCallback(final String adresse, final String timestampA, final Double localIncrementalIndex) {
             	final ConnectionLifecycleCallback DconnectionLifecycleCallback =
                     new ConnectionLifecycleCallback() {
                         @Override
@@ -162,7 +165,10 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
                                      Toast.makeText(reactContext, "Request Accepted !" , Toast.LENGTH_SHORT).show();
 									 setEndpointConnected(endpointId);
                                      Log.d("NearbyModule", "Connected to endpoint: " + endpointId );
-									 sendData(1, endpointId, adresse + ' '+ timestampA);
+									 sendData("1", endpointId, adresse + ' '+ timestampA + ' ' + "1");
+                                     WritableMap params= Arguments.createMap();
+                                     params.putString("endpointId", endpointId);
+                                     sendEvent(reactContext, "connectedToEndpointB", params);
                                     //SENDING DATA BETWEEN DEVICES
 									// Convert the strings to bytes
 									// byte[] bytesString1 = adresse.getBytes(StandardCharsets.UTF_8);
@@ -246,12 +252,10 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
 
                                     Toast.makeText(reactContext, "Request Accepted !" , Toast.LENGTH_SHORT).show();
                                     Log.d("NearbyModule", "Connected to endpoint: " + endpointId );
-									// sendData(endpointId, "hello from advertiser");
 									setEndpointConnected(endpointId);
-                                    // tesst();
-                                    //SENDING DATA BETWEEN DEVICES
-                                    //Payload bytesPayload = Payload.fromBytes(new byte[] {0xa, 0xb, 0xc, 0xd});
-                                    // Nearby.getConnectionsClient(reactContext).sendPayload(endpointId, bytesPayload);
+                                    WritableMap params= Arguments.createMap();
+                                    params.putString("endpointId", endpointId);
+                                    sendEvent(reactContext, "connectedToEndpointA", params);
                                     break;
                                 case ConnectionsStatusCodes.STATUS_CONNECTION_REJECTED:
                                     // The connection was rejected by one or both sides.
@@ -289,7 +293,7 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
                 Toast.makeText(reactContext, "Stoped Advertising !", Toast.LENGTH_SHORT).show();
             }
 			@ReactMethod
-			public void sendData(int number, String endpointId, String message) {
+			public void sendData(String number, String endpointId, String message) {
                 setEventNumber(number);
 				byte[] bytesMessage = message.getBytes(StandardCharsets.UTF_8);
 
@@ -316,19 +320,20 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
                         // Emitting the event to JS 
                         WritableMap params= Arguments.createMap();
                         params.putString("MessageReceived", receivedMessage);
-                        switch(eventNumber) {
-                            case 1:
-                              sendEvent(reactContext, "initEncounterEvent", params);
-                              break;
-                            case 2:
-                              sendEvent(reactContext, "retrieveTEncounterEvent", params);
-                              break;
-                            case 3:
-                              sendEvent(reactContext, "retrieveFEncounterEvent", params);
-                              break;
-                            default:
-                              Toast.makeText(reactContext, "Unknown Event", Toast.LENGTH_SHORT).show();
-                          }                        
+                        sendEvent(reactContext, "MessageReceivedEvent", params);
+                        // switch(receivedMessage.charAt(receivedMessage.length() - 1)) {
+                        //     case '1':
+                        //       sendEvent(reactContext, "initEncounterEvent", params);
+                        //       break;
+                        //     case '2':
+                        //       sendEvent(reactContext, "retrieveTEncounterEvent", params);
+                        //       break;
+                        //     case '3':
+                        //       sendEvent(reactContext, "retrieveFEncounterEvent", params);
+                        //       break;
+                        //     default:
+                        //       Toast.makeText(reactContext, "Unknown Event"+ getEventNumber(), Toast.LENGTH_SHORT).show();
+                        //   }                        
                     }
                     // A new payload has been received.
                     Log.d("NearbyModule", "Payload received from endpoint: " + endpointId);
