@@ -27,6 +27,7 @@ import {retrieveFEncounterIDFunction} from './src/retrieveFEncounterID';
 import {signMessage} from './src/signMessage';
 import {encryptData} from './src/encryptData';
 import {decryptData} from './src/decryptData';
+
 const projectId = PROJECTID;
 const {NearbyConnectionModule} = NativeModules;
 const providerMetadata = {
@@ -312,8 +313,9 @@ const App = () => {
       />
       <Button title="encrypt data" onPress={encryptDataFn} />
       <Text>Encrypted Data: {dataEncrypted}</Text>
-      <Button title="decrypt data" onPress={verifySign} />
+      <Button title="decrypt data" onPress={decryptDataFn} />
       <Text>Decrypted Data: {dataDecrypted}</Text>
+      <Button title="verify Signature" onPress={}/>
     </>
   );
 };

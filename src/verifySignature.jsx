@@ -6,7 +6,7 @@ export const signMessage = async (message, signature, publicKey) => {
       signature: signature,
       publicKey: publicKey
     });
-    const verifSignature = response.data.verifySignature;
+    const verifSignature = response.data.verifingResult;
     return verifSignature;
   } catch (error) {
     console.error('Error in verifing the signature:', error);

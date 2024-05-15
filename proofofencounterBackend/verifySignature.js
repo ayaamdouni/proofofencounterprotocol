@@ -6,7 +6,6 @@ function verifySignature(message, signature, publicKey) {
     const publicKeyB = fs.readFileSync("publicB.pem", { encoding: "utf-8" });
     const verify = crypto.createVerify('RSA-SHA256');
     verify.update(message);
-    console.log('result of verify sign: ', verify.verify(publicKeyB, signature, 'hex'));
     return verify.verify(publicKeyB, signature, 'hex');
 }
 
