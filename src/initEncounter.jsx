@@ -2,7 +2,7 @@ import {ContractABI} from './Contract/contractABI';
 import {createWalletClient, custom} from 'viem';
 import {mainnet, sepolia, fantomTestnet} from 'viem/chains';
 import {NativeModules} from 'react-native';
-import {encryptData} from './encryptData';
+import {encrypt} from './encrypt';
 import {signMessage} from './signMessage';
 const {NearbyConnectionModule} = NativeModules;
 export const initEncounter = async (
@@ -43,7 +43,7 @@ export const initEncounter = async (
       TEncounterIDparams,
       localIncrementalIndexB,
     );
-    const messageToSend = await encryptData(
+    const messageToSend = await encrypt(
       address,
       TEncounterIDparams,
       localIncrementalIndexB,

@@ -22,7 +22,7 @@ import {finalizeEncounter} from './src/finalizeEncounter';
 import {retrieveTEncounterIDFunction} from './src/retrieveTEncounterID';
 import {retrieveFEncounterIDFunction} from './src/retrieveFEncounterID';
 import {signMessage} from './src/signMessage';
-import {encryptData} from './src/encryptData';
+import {encrypt} from './src/encrypt';
 import {decryptData} from './src/decryptData';
 import {verifySign} from './src/verifySignature';
 
@@ -50,6 +50,7 @@ export default function App() {
   const [TEncounterID, setTEncounterID] = useState('');
   const [TencounterIDretrieved, setTencounterIDretrieved] = useState('');
   const [FEncounterID, setFEncounterID] = useState('');
+  const [FencounterIDretrieved, setFencounterIDretrieved] = useState('');
   const [encounterIndex, setEncounterIndex] = useState('');
   const [connectedEndpoint, setConnectedEndpooit] = useState('');
   const [isDiscoverer, setisDiscoverer] = useState(false);
@@ -112,6 +113,16 @@ export default function App() {
           setReceivedMessage(event.MessageReceived);
           decryptDataFn(event.MessageReceived.slice(0, -1), 'privateKeyA');
         }
+        if (
+          event.MessageReceived.charAt(event.MessageReceived.length - 1) === '3'
+        ) {
+          console.log(
+            'message received to retrieve FEncounterID:',
+            event.MessageReceived,
+          );
+          setReceivedMessage(event.MessageReceived);
+          decryptDataFn(event.MessageReceived.slice(0, -1), 'privateKeyB');
+        }
       },
     );
     return () => {
@@ -120,9 +131,15 @@ export default function App() {
   });
 
   useEffect(() => {
-    if (dataDecrypted) {
+    if (dataDecrypted && isDiscoverer) {
       setDeviceB(dataDecrypted.split(':')[0]);
       setTEncounterID(dataDecrypted.split(':')[1]);
+    }
+  }, [dataDecrypted]);
+
+  useEffect(() => {
+    if (dataDecrypted && isAdvertiser) {
+      setFEncounterID(dataDecrypted.split(':')[0]);
     }
   }, [dataDecrypted]);
 
@@ -139,6 +156,18 @@ export default function App() {
   }, [encounterIndex, deviceA, receivedMessage]);
 
   useEffect(() => {
+    if (
+      isAdvertiser &&
+      encounterIndex &&
+      deviceA &&
+      aTimestamp &&
+      receivedMessage
+    ) {
+      retrieveFEncounterFN(encounterIndex, address, aTimestamp, provider);
+    }
+  }, [encounterIndex, FEncounterID, receivedMessage]);
+
+  useEffect(() => {
     if (isDiscoverer && TEncounterID && TencounterIDretrieved) {
       verifySignFN(
         TEncounterID,
@@ -150,6 +179,17 @@ export default function App() {
   }, [TencounterIDretrieved]);
 
   useEffect(() => {
+    if (isAdvertiser && FEncounterID && FencounterIDretrieved) {
+      verifySignFN(
+        FEncounterID,
+        FencounterIDretrieved.substring(2),
+        'publickeyA',
+      );
+      console.log('THE END !');
+    }
+  }, [FencounterIDretrieved]);
+
+  useEffect(() => {
     if (
       deviceA &&
       isAdvertiser &&
@@ -157,12 +197,6 @@ export default function App() {
       bTimestamp &&
       connectedEndpoint
     ) {
-      // console.log(
-      //   'you can init encounter Tx:',
-      //   deviceA,
-      //   TEncounterID,
-      //   bTimestamp,
-      // );
       initEncounter(
         provider,
         address,
@@ -179,7 +213,7 @@ export default function App() {
     if (
       deviceB &&
       isDiscoverer &&
-      TEncounterID &&
+      FEncounterID &&
       aTimestamp &&
       encounterIndex &&
       connectedEndpoint
@@ -208,14 +242,27 @@ export default function App() {
     setFEncounterID(FEncounter);
   };
   const retrieveTEncounterFN = useCallback(
-    async (encounterIndexp, didBp, bTimestampp, providerp) => {
+    async (encounterIndexp, didAp, bTimestampp, providerp) => {
       const TEncounterRetrieved = await retrieveTEncounterIDFunction(
         encounterIndexp,
-        didBp,
+        didAp,
         bTimestampp,
         providerp,
       );
       setTencounterIDretrieved(TEncounterRetrieved);
+    },
+    [],
+  );
+
+  const retrieveFEncounterFN = useCallback(
+    async (encounterIndexp, didBp, aTimestampp, providerp) => {
+      const FEncounterRetrieved = await retrieveFEncounterIDFunction(
+        encounterIndexp,
+        didBp,
+        aTimestampp,
+        providerp,
+      );
+      setFencounterIDretrieved(FEncounterRetrieved);
     },
     [],
   );
@@ -284,15 +331,6 @@ export default function App() {
     } else {
       open();
     }
-  };
-  const encryptDataFn = async () => {
-    const returnedData = await encryptData(
-      'hello this is the address',
-      '123456',
-      '5',
-      'publicKey',
-    );
-    setEncryptedData(returnedData);
   };
 
   return (

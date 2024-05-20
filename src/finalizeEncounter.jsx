@@ -51,7 +51,6 @@ export const finalizeEncounter = async (
       aTimestampparams,
     );
     const messageToSend = await encryptData(
-      address,
       FEncounterID,
       aTimestampparams,
       'publicKeyB',

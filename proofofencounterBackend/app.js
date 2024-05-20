@@ -1,6 +1,7 @@
 const express = require('express');
 const signMessage = require('./sign');
-const encryptData = require('./encrypt');
+const encrypt = require('./encrypt');
+const encryptData = require('./encryptData');
 const decryptData = require('./decryptMessage');
 const verifySignature = require('./verifySignature');
 const app = express();
@@ -19,7 +20,12 @@ app.post('/verifySign', (req, res) => {
 });
 app.post('/encrypt', (req, res) => {
     const {didB, TencounterID, incrementalIndexB, publicKey} = req.body;
-    const encryptedData = encryptData(didB, TencounterID, incrementalIndexB, publicKey);
+    const encryptedData = encrypt(didB, TencounterID, incrementalIndexB, publicKey);
+    res.json({encryptedData});
+});
+app.post('/encryptData', (req, res) => {
+    const {FencounterID, aTimestamp, publicKey} = req.body;
+    const encryptedData = encryptData(FencounterID, aTimestamp, publicKey);
     res.json({encryptedData});
 });
 app.post('/decrypt', (req, res) => {

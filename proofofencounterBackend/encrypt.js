@@ -2,7 +2,7 @@ const crypto = require('crypto');
 const fs = require("fs");
 const publicKeyA = fs.readFileSync("publicA.pem", { encoding: 'utf-8' });
 
-function encryptData (didB, TencounterID, incrementalIndexB, publicKey1) {
+function encrypt (didB, TencounterID, incrementalIndexB, publicKey1) {
     console.log('encrypting data called');
     const buffer = Buffer.from(didB + ':' + TencounterID + ':' + incrementalIndexB);
     const publicKey = publicKeyA;
@@ -19,7 +19,7 @@ function encryptData (didB, TencounterID, incrementalIndexB, publicKey1) {
     return encryptedData.toString('base64');
 };
 
-module.exports = encryptData;
+module.exports = encrypt;
 
 
 
