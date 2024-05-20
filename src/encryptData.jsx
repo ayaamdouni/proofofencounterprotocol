@@ -1,4 +1,5 @@
 import axios from 'axios';
+import {SERVERURL} from '@env';
 export const encryptData = async (
   didB,
   TencounterID,
@@ -6,13 +7,13 @@ export const encryptData = async (
   publicKey,
 ) => {
   try {
-    const response = await axios.post('http://192.168.0.246:3000/encrypt', {
+    const response = await axios.post(`http://192.168.181.116:3000/encrypt`, {
       didB: didB,
       TencounterID: TencounterID,
       incrementalIndexB: incrementalIndexB,
-      publicKey: 'publicKey',
+      publicKey: publicKey,
     });
-    const encrypted = response.data.dataEncrypted;
+    const encrypted = response.data.encryptedData;
     console.log('encrypted Data received: ', encrypted);
     return encrypted;
   } catch (error) {

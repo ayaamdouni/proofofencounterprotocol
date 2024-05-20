@@ -19,12 +19,12 @@ app.post('/verifySign', (req, res) => {
 });
 app.post('/encrypt', (req, res) => {
     const {didB, TencounterID, incrementalIndexB, publicKey} = req.body;
-    const dataEncrypted = encryptData(didB, TencounterID, incrementalIndexB, publicKey);
-    res.json({dataEncrypted});
+    const encryptedData = encryptData(didB, TencounterID, incrementalIndexB, publicKey);
+    res.json({encryptedData});
 });
 app.post('/decrypt', (req, res) => {
-    const {encryptedMessage} = req.body;
-    const dataDecrypted = decryptData(encryptedMessage);
+    const {encryptedMessage, privateKey} = req.body;
+    const dataDecrypted = decryptData(encryptedMessage, privateKey);
     res.json({dataDecrypted});
 });
 app.listen(3000, () => {

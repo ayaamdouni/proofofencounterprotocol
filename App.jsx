@@ -1,15 +1,12 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
-  Button,
+  SafeAreaView,
+  TouchableOpacity,
 } from 'react-native';
+import SearchingLoader from './src/component/searchingLoader';
 import '@walletconnect/react-native-compat';
 import {
   WalletConnectModal,
@@ -27,9 +24,11 @@ import {retrieveFEncounterIDFunction} from './src/retrieveFEncounterID';
 import {signMessage} from './src/signMessage';
 import {encryptData} from './src/encryptData';
 import {decryptData} from './src/decryptData';
+import {verifySign} from './src/verifySignature';
 
-const projectId = PROJECTID;
 const {NearbyConnectionModule} = NativeModules;
+const eventEmitter = new NativeEventEmitter(NativeModules.ToastExample);
+const projectId = PROJECTID;
 const providerMetadata = {
   name: 'YOUR_PROJECT_NAME',
   description: 'YOUR_PROJECT_DESCRIPTION',
@@ -40,17 +39,17 @@ const providerMetadata = {
     universal: 'YOUR_APP_UNIVERSAL_LINK.com',
   },
 };
-
-const App = () => {
+export default function App() {
   const {open, isConnected, provider, address} = useWalletConnectModal();
   const [deviceA, setDeviceA] = useState('');
   const [deviceB, setDeviceB] = useState('');
-  const [localIncrementalIndexA, setLocalIncrementalIndexA] = useState(4);
-  const [localIncrementalIndexB, setLocalIncrementalIndexB] = useState(5);
+  const [localIncrementalIndexA, setLocalIncrementalIndexA] = useState(44);
+  const [localIncrementalIndexB, setLocalIncrementalIndexB] = useState(35);
   const [bTimestamp, setbTimestamp] = useState('2000');
   const [aTimestamp, setaTimestamp] = useState('5000');
   const [TEncounterID, setTEncounterID] = useState('');
-  const [FEncounterID, setFEncounterID] = useState('0x90');
+  const [TencounterIDretrieved, setTencounterIDretrieved] = useState('');
+  const [FEncounterID, setFEncounterID] = useState('');
   const [encounterIndex, setEncounterIndex] = useState('');
   const [connectedEndpoint, setConnectedEndpooit] = useState('');
   const [isDiscoverer, setisDiscoverer] = useState(false);
@@ -58,35 +57,169 @@ const App = () => {
   const [hashInit, setHashInit] = useState('');
   const [dataEncrypted, setEncryptedData] = useState('');
   const [dataDecrypted, setDataDecrypted] = useState('');
-  const eventEmitter = new NativeEventEmitter(NativeModules.ToastExample);
+  const [receivedMessage, setReceivedMessage] = useState('');
+
   const publicClient = createPublicClient({
     chain: sepolia,
     transport: http(
       'https://sepolia.infura.io/v3/777255a92575483a9ec9116de0833863',
     ),
   });
+  useEffect(() => {
+    let EventListener = eventEmitter.addListener(
+      'connectedToEndpointB',
+      event => {
+        setConnectedEndpooit(event.endpointId);
+        console.log('device A connected to an endpointID B', connectedEndpoint);
+      },
+    );
+  }, []);
+  useEffect(() => {
+    let EventListener = eventEmitter.addListener(
+      'connectedToEndpointA',
+      event => {
+        setConnectedEndpooit(event.endpointId);
+        console.log('device B connected to an endpointID A', connectedEndpoint);
+      },
+    );
+  }, []);
   const unwatch = publicClient.watchEvent({
     address: '0x29eBB49C3f4d7988c9eA8E27A47e098f0252ce27',
     onLogs: logs => {
+      console.log(parseInt(logs[0].data, 16));
       setEncounterIndex(parseInt(logs[0].data, 16));
     },
   });
+  useEffect(() => {
+    let EventListener = eventEmitter.addListener(
+      'MessageReceivedEvent',
+      event => {
+        console.log('New Message Received:', event.MessageReceived);
+        if (
+          event.MessageReceived.charAt(event.MessageReceived.length - 1) === '1'
+        ) {
+          console.log('generating TEncounterID and initing encounter Tx');
+          setDeviceA(event.MessageReceived.split(' ')[0]);
+          generateTEncounterID(localIncrementalIndexA, localIncrementalIndexB);
+        }
+        if (
+          event.MessageReceived.charAt(event.MessageReceived.length - 1) === '2'
+        ) {
+          console.log(
+            'message received to retrieve TEncounterID:',
+            event.MessageReceived,
+          );
+          setReceivedMessage(event.MessageReceived);
+          decryptDataFn(event.MessageReceived.slice(0, -1), 'privateKeyA');
+        }
+      },
+    );
+    return () => {
+      EventListener.remove();
+    };
+  });
 
-  let connectedToEndpointA = eventEmitter.addListener(
-    'connectedToEndpointA',
-    event => {
-      console.log('Connected To an endpoint successfully: ', event);
-      setConnectedEndpooit(event.endpointId);
+  useEffect(() => {
+    if (dataDecrypted) {
+      setDeviceB(dataDecrypted.split(':')[0]);
+      setTEncounterID(dataDecrypted.split(':')[1]);
+    }
+  }, [dataDecrypted]);
+
+  useEffect(() => {
+    if (
+      isDiscoverer &&
+      encounterIndex &&
+      deviceA &&
+      bTimestamp &&
+      receivedMessage
+    ) {
+      retrieveTEncounterFN(encounterIndex, deviceA, bTimestamp, provider);
+    }
+  }, [encounterIndex, deviceA, receivedMessage]);
+
+  useEffect(() => {
+    if (isDiscoverer && TEncounterID && TencounterIDretrieved) {
+      verifySignFN(
+        TEncounterID,
+        TencounterIDretrieved.substring(2),
+        'publickeyB',
+      );
+      generateFEncounterID(TEncounterID, aTimestamp);
+    }
+  }, [TencounterIDretrieved]);
+
+  useEffect(() => {
+    if (
+      deviceA &&
+      isAdvertiser &&
+      TEncounterID &&
+      bTimestamp &&
+      connectedEndpoint
+    ) {
+      // console.log(
+      //   'you can init encounter Tx:',
+      //   deviceA,
+      //   TEncounterID,
+      //   bTimestamp,
+      // );
+      initEncounter(
+        provider,
+        address,
+        deviceA,
+        TEncounterID,
+        bTimestamp,
+        connectedEndpoint,
+        localIncrementalIndexB,
+      );
+    }
+  }, [TEncounterID, address, bTimestamp, deviceA]);
+
+  useEffect(() => {
+    if (
+      deviceB &&
+      isDiscoverer &&
+      TEncounterID &&
+      aTimestamp &&
+      encounterIndex &&
+      connectedEndpoint
+    ) {
+      finalizeEncounter(
+        provider,
+        address,
+        encounterIndex,
+        deviceB,
+        FEncounterID,
+        aTimestamp,
+        connectedEndpoint,
+        localIncrementalIndexB,
+      );
+    }
+  }, [FEncounterID, address, aTimestamp, deviceB, encounterIndex]);
+
+  const generateTEncounterID = (indexA, indexB) => {
+    const TEncounter = indexA ^ indexB;
+    console.log('TEncounterID generated', TEncounter);
+    setTEncounterID(TEncounter);
+  };
+  const generateFEncounterID = (tencounterp, aTimestampp) => {
+    const FEncounter = tencounterp ^ aTimestampp;
+    console.log('FEncounterID generated', FEncounter);
+    setFEncounterID(FEncounter);
+  };
+  const retrieveTEncounterFN = useCallback(
+    async (encounterIndexp, didBp, bTimestampp, providerp) => {
+      const TEncounterRetrieved = await retrieveTEncounterIDFunction(
+        encounterIndexp,
+        didBp,
+        bTimestampp,
+        providerp,
+      );
+      setTencounterIDretrieved(TEncounterRetrieved);
     },
+    [],
   );
 
-  let connectedToEndpointB = eventEmitter.addListener(
-    'connectedToEndpointB',
-    event => {
-      console.log('Connected To an endpoint successfully: ', event);
-      setConnectedEndpooit(event.endpointId);
-    },
-  );
   useEffect(() => {
     if (deviceA && isDiscoverer) {
       console.log('device A:', deviceA);
@@ -97,149 +230,28 @@ const App = () => {
       );
     }
   }, [deviceA, localIncrementalIndexA]);
-  useEffect(() => {
-    if (deviceA && isAdvertiser && TEncounterID && bTimestamp) {
-      console.log(
-        'you can init encounter Tx:',
-        deviceA,
-        TEncounterID,
-        bTimestamp,
+
+  const decryptDataFn = useCallback(async (encryptedDatap, publicKeyp) => {
+    const decrypted = await decryptData(encryptedDatap, publicKeyp);
+    setDataDecrypted(decrypted);
+  }, []);
+
+  const verifySignFN = useCallback(
+    async (tencounterp, signaturep, publicKeyp) => {
+      const resultVerify = await verifySign(
+        tencounterp,
+        signaturep,
+        publicKeyp,
       );
-      const hash = initEncounter(
-        provider,
-        address,
-        deviceA,
-        TEncounterID,
-        bTimestamp,
-        connectedEndpoint,
-      );
-      // console.log('this is after init Encounter Tx', hash);
-    }
-  }, [TEncounterID, address, bTimestamp, deviceA]);
-  useEffect(() => {
-    let EventListener = eventEmitter.addListener(
-      'MessageReceivedEvent',
-      event => {
-        console.log('New Message Received:', event.MessageReceived);
-        switch (
-          event.MessageReceived.charAt(event.MessageReceived.length - 1)
-        ) {
-          case '1':
-            console.log('initing encounter Tx');
-            setDeviceA(event.MessageReceived.split(' ')[0]);
-            generateTEncounterID(
-              localIncrementalIndexA,
-              localIncrementalIndexB,
-            );
-            break;
-          case '2':
-            console.log('retrieve TEncounter');
-            break;
-          default:
-            console.log('do nothing', event.MessageReceived[0]);
-        }
-      },
-    );
-  });
-
-  // useEffect(() => {
-  //   if (isAdvertiser) {
-  //     let InitEventListener = eventEmitter.addListener(
-  //       'initEncounterEvent',
-  //       event => {
-  //         console.log(
-  //           'event to init Encounter emitted:',
-  //           event.MessageReceived,
-  //         );
-  //         console.log('arguments table: ', event.MessageReceived.split(' '));
-  //         setDeviceA(event.MessageReceived.split(' ')[0]);
-  //         setTEncounterID(
-  //           generateTEncounterID(
-  //             localIncrementalIndexA,
-  //             localIncrementalIndexB,
-  //           ),
-  //         );
-  //       },
-  //     );
-  //   }
-  // });
-  const generateTEncounterID = async (indexA, indexB) => {
-    // eslint-disable-next-line no-bitwise
-    try {
-      const TEncounter = indexA ^ indexB;
-      const signedTEncounterID = await signMessage(
-        TEncounter.toString(),
-        'private Key B',
-      );
-      setTEncounterID(signedTEncounterID);
-      return signedTEncounterID;
-    } catch (error) {
-      console.log('error in generating TEncounterID', error);
-      throw error;
-    }
-  };
-
-  // useEffect(() => {
-  //   if (deviceA && isAdvertiser && TEncounterID) {
-  //     console.log('initing encounter Tx', deviceA, TEncounterID, bTimestamp);
-  //     // initEncounter(provider, address, deviceA, TEncounterID, bTimestamp);
-  //   }
-  // }, [deviceA, isAdvertiser, TEncounterID]);
-
-  // useEffect(() => {
-  //   if (isAdvertiser) {
-  //     console.log(
-  //       'encounterIndex emited from smart contract to deviceB: ',
-  //       encounterIndex,
-  //     );
-  //     // NearbyConnectionModule.sendData(
-  //     //   '2',
-  //     //   connectedEndpoint,
-  //     //   deviceB + ' ' + TEncounterID + ' ' + bTimestamp + ' ' + '2',
-  //     // );
-  //   }
-  // }, [encounterIndex]);
-  // useEffect(() => {
-  //   if (isDiscoverer) {
-  //     console.log(
-  //       'encounterIndex emited from smart contract to deviceA: ',
-  //       encounterIndex,
-  //       deviceA,
-  //     );
-  //     let TEEventListener = eventEmitter.addListener(
-  //       'retrieveTEncounterEvent',
-  //       event => {
-  //         console.log('retrieve TEncounter Event', event.MessageReceived);
-  //         setDeviceB(event.MessageReceived.split(' ')[0]);
-  //         setbTimestamp(event.MessageReceived.split(' ')[2]);
-  //       },
-  //     );
-  //   }
-  // }, [encounterIndex, deviceA]);
-  // useEffect(() => {
-  //   if (isDiscoverer) {
-  //     retrieveTEncounterIDFunction(encounterIndex, deviceA, bTimestamp);
-  //   }
-  // }, [encounterIndex, deviceB, bTimestamp]);
-
-  // let FEEventListener = eventEmitter.addListener(
-  //   'retrieveFEncounterEvent',
-  //   event => {
-  //     console.log('retrieve FEncounter Event:', event.MessageReceived);
-  //     retrieveFEncounterIDFunction(encounterIndex, address, aTimestamp);
-  //   },
-  // );
-  // Removes the listener once unmounted
-  // return () => {
-  //   eventListener.remove();
-  // };
-  // },[]);
+      return resultVerify;
+    },
+    [],
+  );
 
   const startDiscovering = () => {
     setDeviceA(address);
     setisDiscoverer(true);
     setLocalIncrementalIndexA(5);
-    // NearbyConnectionModule.startAdvertising();
   };
   const startAdvertising = () => {
     setDeviceB(address);
@@ -259,9 +271,13 @@ const App = () => {
     setDeviceB('');
     NearbyConnectionModule.stopAdvertising();
   };
-  const sendData = data => {
-    NearbyConnectionModule.sendData(connectedEndpoint, data);
+  const advertisingFN = () => {
+    isAdvertiser ? stopAdvertising() : startAdvertising();
   };
+  const discoveringFN = () => {
+    isDiscoverer ? stopDiscovering() : startDiscovering();
+  };
+
   const onPress = () => {
     if (isConnected) {
       provider.disconnect();
@@ -278,45 +294,141 @@ const App = () => {
     );
     setEncryptedData(returnedData);
   };
-  const decryptDataFn = async () => {
-    console.log('this is the encrypted data', dataEncrypted.toString());
-    const returnedData = await decryptData(
-      dataEncrypted.toString(),
-      typeof dataEncrypted.toString(),
-    );
-    setDataDecrypted(returnedData);
-  };
-  const signMessageFn = async (message, privateKey) => {
-    const signedData = await signMessage(message, privateKey);
-    console.log('signed data', signedData);
-  };
 
   return (
-    <>
-      <Button
-        title={isConnected ? 'Disconnect' : 'Connect'}
-        onPress={onPress}
-      />
-      <Button title="start discovering" onPress={startDiscovering} />
-      <Button title="stop discovering" onPress={stopDiscovering} />
-      <Button title="start advertising" onPress={startAdvertising} />
-      <Button title="stop advertising" onPress={stopAdvertising} />
-      <WalletConnectModal
-        projectId={projectId}
-        providerMetadata={providerMetadata}
-      />
-      <Text>deviceA address: {deviceA}</Text>
-      <Text>deviceB address: {deviceB}</Text>
-      <Button
-        title="Sign message"
-        onPress={() => signMessageFn('hello this is a message', 'private Key')}
-      />
-      <Button title="encrypt data" onPress={encryptDataFn} />
-      <Text>Encrypted Data: {dataEncrypted}</Text>
-      <Button title="decrypt data" onPress={decryptDataFn} />
-      <Text>Decrypted Data: {dataDecrypted}</Text>
-      <Button title="verify Signature" onPress={}/>
-    </>
+    <View style={styles.container}>
+      <SafeAreaView style={{alignSelf: 'stretch'}}>
+        <WalletConnectModal
+          projectId={projectId}
+          providerMetadata={providerMetadata}
+        />
+        <View style={styles.elements}>
+          <View style={styles.topContainer}>
+            <View>
+              <Text style={styles.title}>Proof of Encounter</Text>
+            </View>
+          </View>
+
+          <View style={styles.topContainer}>
+            <SearchingLoader />
+          </View>
+
+          <View style={styles.buttonsContainer}>
+            <TouchableOpacity style={styles.button} onPress={discoveringFN}>
+              <Text style={styles.buttonText}>
+                {isDiscoverer ? 'Stop Discovering' : 'Discover'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={advertisingFN}>
+              <Text style={styles.buttonText}>
+                {isAdvertiser ? 'Stop Advertising' : 'Advertise'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </SafeAreaView>
+      <TouchableOpacity style={styles.connectButton} onPress={onPress}>
+        <Text style={styles.connectbuttonText}>
+          {isConnected ? 'Disconnect your wallet' : 'Connect your wallet'}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
-};
-export default App;
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#DEE9FD',
+    alignItems: 'center',
+  },
+  topContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  buttonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  elements: {
+    marginHorizontal: 32,
+    marginTop: 42,
+    flexDirection: 'column',
+    // alignItems: 'center',
+  },
+  headerTop: {
+    color: 'gray',
+    fontWeight: '800',
+  },
+  scanningContainer: {
+    marginVertical: 32,
+    alignItems: 'center',
+    // backgroundColor: "black"
+  },
+  buttonStyle: {
+    width: 300,
+    height: 300,
+    color: 'black',
+    borderRadius: 150,
+    borderColor: '#D7E1F3',
+    borderWidth: 10,
+  },
+  title: {
+    fontSize: 25,
+    color: '#6C7A93',
+    fontWeight: '600',
+    fontFamily: 'monospace',
+  },
+  artist: {
+    fontSize: 14,
+    marginTop: 6,
+    color: 'gray',
+    fontWeight: '500',
+  },
+  button: {
+    width: 144,
+    height: 48,
+    borderRadius: 240,
+    fontSize: 15,
+    fontFamily: 'Roboto',
+    borderWidth: 0,
+    position: 'relative',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    elevation: 10,
+  },
+  buttonText: {
+    fontSize: 15,
+    fontFamily: 'monospace',
+    color: '#6C7A93',
+  },
+
+  connectButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    borderRightWidth: 3,
+    borderBottomWidth: 3,
+    borderRightColor: '#252525',
+    borderBottomColor: '#252525',
+    // borderColor: '#252525',
+    backgroundColor: '#FAFAFA',
+    // marginVertical: 35,
+    elevation: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+  },
+  connectbuttonText: {
+    fontFamily: 'monospace',
+    fontSize: 15,
+    color: '#6C7A93',
+    textTransform: 'uppercase',
+  },
+});

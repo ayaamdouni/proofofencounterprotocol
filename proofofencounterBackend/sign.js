@@ -1,14 +1,21 @@
 const crypto = require('crypto');
 const fs = require("fs");
+const privateKeyA = fs.readFileSync("privateA.pem", { encoding: "utf-8" });
+const privateKeyB = fs.readFileSync("privateB.pem", { encoding: "utf-8" });
 
 function signMessage(message, privateKey1) {
-    const privateKey = fs.readFileSync("privateB.pem", { encoding: "utf-8" });
+    console.log('siging message called');
+    let privateKey;
+    if(privateKey1 == 'privateKeyA') {
+        privateKey = privateKeyA;
+    } else if (privateKey1 == 'privateKeyB') {
+        privateKey = privateKeyB;
+    }
     const sign = crypto.createSign('RSA-SHA256');
     sign.update(message);
     signature = sign.sign(privateKey, 'hex');
-    console.log(signature);
+    console.log("signed message:", signature);
     return signature;
 }
 
-// signMessage("hello this is a message to sign", "")
 module.exports = signMessage; 

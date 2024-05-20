@@ -18,7 +18,7 @@ const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
 //
 // To export the public key and write it to file:
 
-fs.writeFileSync("publicB.pem", publicKey, { encoding: "utf-8" });
+fs.writeFileSync("publicA.pem", publicKey, { encoding: "utf-8" });
   // *********************************************************************
   
   // *********************************************************************
@@ -26,4 +26,4 @@ fs.writeFileSync("publicB.pem", publicKey, { encoding: "utf-8" });
   // To export the private key and write it to file
   
  
-fs.writeFileSync("privateB.pem", privateKey, {encoding: "utf-8",});
+fs.writeFileSync("privateA.pem", privateKey, {encoding: "utf-8",});

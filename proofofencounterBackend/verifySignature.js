@@ -1,12 +1,23 @@
 const crypto = require('crypto');
 const fs = require("fs");
 
-function verifySignature(message, signature, publicKey) {
+const publicKeyB = fs.readFileSync("publicB.pem", { encoding: "utf-8" });
+const publicKeyA = fs.readFileSync("publicA.pem", { encoding: "utf-8" });
+function verifySignature(message, signature, publicKey1) {
+    console.log('verifing signature called');
+    let publicKey;
+    if(publicKey1 == 'publickeyA') {
+        publicKey = publicKeyA;
+    } else if (publicKey1 == 'publickeyB') {
+        publicKey = publicKeyB;
+    }
     console.log('verifing signature');
-    const publicKeyB = fs.readFileSync("publicB.pem", { encoding: "utf-8" });
+    
     const verify = crypto.createVerify('RSA-SHA256');
     verify.update(message);
-    return verify.verify(publicKeyB, signature, 'hex');
+    const result = verify.verify(publicKey, signature, 'hex')
+    console.log('the result of verifing signature', result);
+    return result;
 }
 
 module.exports = verifySignature;

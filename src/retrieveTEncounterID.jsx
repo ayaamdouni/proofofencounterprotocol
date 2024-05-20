@@ -1,19 +1,22 @@
 import {ContractABI} from './Contract/contractABI';
 import {mainnet, sepolia} from 'viem/chains';
-import {createPublicClient, http} from 'viem';
-const publicClient = createPublicClient({
-  chain: sepolia,
-  transport: http(
-    'https://sepolia.infura.io/v3/777255a92575483a9ec9116de0833863',
-  ),
-});
+import {createPublicClient, custom} from 'viem';
+
 
 export const retrieveTEncounterIDFunction = async (
   encounterIndexparams,
   deviceAparams,
   bTimestampparams,
+  provider,
 ) => {
   try {
+    const publicClient = createPublicClient({
+      chain: sepolia,
+      transport: custom(provider),
+      // transport: http(
+      //   'https://sepolia.infura.io/v3/777255a92575483a9ec9116de0833863',
+      // ),
+    });
     console.log(
       'retrieving TEncounterID params:',
       encounterIndexparams,
@@ -37,17 +40,8 @@ export const retrieveTEncounterIDFunction = async (
     console.log('result of retrieve TEncounterID', data);
     return data;
   } catch (error) {
-    console.error('error in retrieving TEncounterID');
+    console.error('error in retrieving TEncounterID', error);
     throw error;
   }
 
-  // console.log('args: ', encounterIndex, deviceB, FEncounterID, aTimestamp);
-  // finalizeEncounter(
-  //   provider,
-  //   address,
-  //   encounterIndex,
-  //   deviceB,
-  //   FEncounterID,
-  //   aTimestamp,
-  // );
 };

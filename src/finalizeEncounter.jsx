@@ -1,21 +1,30 @@
 import {ContractABI} from './Contract/contractABI';
 import {createWalletClient, custom} from 'viem';
 import {mainnet, sepolia, fantomTestnet} from 'viem/chains';
-
+import {signMessage} from './signMessage';
+import {encryptData} from './encryptData';
+import {NativeModules} from 'react-native';
+const {NearbyConnectionModule} = NativeModules;
 export const finalizeEncounter = async (
   provider,
   address,
   encounterIndexparams,
   deviceBparams,
-  signedFEncounterID,
+  FEncounterID,
   aTimestampparams,
+  connectedEndpoint,
+  localIncrementalIndexA,
 ) => {
   console.log(
-    'executing finalize encounter: ',
+    'Params of finalize encounter Tx: ',
     encounterIndexparams,
     deviceBparams,
-    signedFEncounterID,
+    FEncounterID,
     aTimestampparams,
+  );
+  const signedFEncounterID = await signMessage(
+    FEncounterID.toString(),
+    'privateKeyA',
   );
   try {
     const walletClient = createWalletClient({
@@ -35,17 +44,24 @@ export const finalizeEncounter = async (
       account: address, //'0x6070c640119b7b53f67E211bD44688a11B5A7409',
     });
 
-    // NearbyConnectionModule.sendData(
-    //   '2',
-    //   connectedEndpoint,
-    //   FEncounterID + // '0x6070c640119b7b53f67E211bD44688a11B5A7409' +
-    //     ' ' +
-    //     aTimestamp +
-    //     ' ' +
-    //     +'3',
-    // );
-    // console.log('final message sent');
+    console.log('hash of finalize Tx:', hash);
+    console.log(
+      'data to be encrypted after finalize',
+      FEncounterID,
+      aTimestampparams,
+    );
+    const messageToSend = await encryptData(
+      address,
+      FEncounterID,
+      aTimestampparams,
+      'publicKeyB',
+    );
+    NearbyConnectionModule.sendData(
+      '3',
+      connectedEndpoint,
+      messageToSend + '3',
+    );
   } catch (err) {
-    console.log('Error while executing the transaction', err);
+    console.log('Error while executing the finalize transaction', err);
   }
 };
