@@ -13,18 +13,15 @@ import {
   useWalletConnectModal,
 } from '@walletconnect/modal-react-native';
 import {mainnet, sepolia, fantomTestnet} from 'viem/chains';
-import {createPublicClient, hashDomain, http} from 'viem';
+import {createPublicClient, http} from 'viem';
 import {NativeModules, NativeEventEmitter} from 'react-native';
 import {PROJECTID} from '@env';
-import {initEncounter} from './src/initEncounter';
-import {ContractABI} from './src/Contract/contractABI';
-import {finalizeEncounter} from './src/finalizeEncounter';
-import {retrieveTEncounterIDFunction} from './src/retrieveTEncounterID';
-import {retrieveFEncounterIDFunction} from './src/retrieveFEncounterID';
-import {signMessage} from './src/signMessage';
-import {encrypt} from './src/encrypt';
-import {decryptData} from './src/decryptData';
-import {verifySign} from './src/verifySignature';
+import {initEncounter} from './src/transactions/initEncounter';
+import {finalizeEncounter} from './src/transactions/finalizeEncounter';
+import {retrieveTEncounterIDFunction} from './src/transactions/retrieveTEncounterID';
+import {retrieveFEncounterIDFunction} from './src/transactions/retrieveFEncounterID';
+import {decryptData} from './src/services/decryptData';
+import {verifySign} from './src/services/verifySignature';
 
 const {NearbyConnectionModule} = NativeModules;
 const eventEmitter = new NativeEventEmitter(NativeModules.ToastExample);
@@ -55,8 +52,6 @@ export default function App() {
   const [connectedEndpoint, setConnectedEndpooit] = useState('');
   const [isDiscoverer, setisDiscoverer] = useState(false);
   const [isAdvertiser, setisAdvertiser] = useState(false);
-  const [hashInit, setHashInit] = useState('');
-  const [dataEncrypted, setEncryptedData] = useState('');
   const [dataDecrypted, setDataDecrypted] = useState('');
   const [receivedMessage, setReceivedMessage] = useState('');
 

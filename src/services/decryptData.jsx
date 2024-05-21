@@ -2,7 +2,7 @@ import axios from 'axios';
 export const decryptData = async (encryptedMessage, privateKey) => {
   try {
     console.log('encrypted Data in decrypt fn: ', encryptedMessage);
-    const response = await axios.post('http://192.168.181.116:3000/decrypt', {
+    const response = await axios.post('http://192.168.0.246:3000/decrypt', {
       encryptedMessage: encryptedMessage.toString(),
       privateKey: privateKey,
     });

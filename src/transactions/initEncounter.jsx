@@ -1,9 +1,9 @@
-import {ContractABI} from './Contract/contractABI';
+import {ContractABI} from '../Contract/contractABI';
 import {createWalletClient, custom} from 'viem';
 import {mainnet, sepolia, fantomTestnet} from 'viem/chains';
 import {NativeModules} from 'react-native';
-import {encrypt} from './encrypt';
-import {signMessage} from './signMessage';
+import {encrypt} from '../services/encrypt';
+import {signMessage} from '../services/signMessage';
 const {NearbyConnectionModule} = NativeModules;
 export const initEncounter = async (
   provider,

@@ -1,4 +1,4 @@
-import {ContractABI} from './Contract/contractABI';
+import {ContractABI} from '../Contract/contractABI';
 import {mainnet, sepolia} from 'viem/chains';
 import {createPublicClient, custom} from 'viem';
 export const retrieveFEncounterIDFunction = async (
