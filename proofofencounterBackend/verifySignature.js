@@ -1,8 +1,8 @@
 const crypto = require('crypto');
 const fs = require("fs");
 
-const publicKeyB = fs.readFileSync("publicB.pem", { encoding: "utf-8" });
-const publicKeyA = fs.readFileSync("publicA.pem", { encoding: "utf-8" });
+const publicKeyB = fs.readFileSync("Keys/publicB.pem", { encoding: "utf-8" });
+const publicKeyA = fs.readFileSync("Keys/publicA.pem", { encoding: "utf-8" });
 function verifySignature(message, signature, publicKey1) {
     console.log('verifing signature called');
     let publicKey;

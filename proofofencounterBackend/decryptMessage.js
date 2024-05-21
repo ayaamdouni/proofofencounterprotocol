@@ -1,8 +1,8 @@
 const crypto = require('crypto');
 const fs = require("fs");
 
-const privateKeyA = fs.readFileSync("privateA.pem", { encoding: "utf-8" });
-const privateKeyB = fs.readFileSync("privateB.pem", { encoding: "utf-8" });
+const privateKeyA = fs.readFileSync("Keys/privateA.pem", { encoding: "utf-8" });
+const privateKeyB = fs.readFileSync("Keys/privateB.pem", { encoding: "utf-8" });
 
 function decryptMessage(encryptedMessage, privateKey1) {
     console.log('decrypting data called');

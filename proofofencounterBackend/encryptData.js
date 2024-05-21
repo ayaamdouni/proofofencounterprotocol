@@ -1,7 +1,7 @@
 const crypto = require('crypto');
 const fs = require("fs");
 
-const publicKeyB = fs.readFileSync("publicB.pem", { encoding: 'utf-8' });
+const publicKeyB = fs.readFileSync("Keys/publicB.pem", { encoding: 'utf-8' });
 
 function encryptData (FencounterID, aTimestamp, publicKey1) {
     console.log('encrypting data called');
