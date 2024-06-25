@@ -1,5 +1,5 @@
 import {ContractABI} from '../Contract/contractABI';
-import {mainnet, sepolia} from 'viem/chains';
+import {mainnet, sepolia, fantomTestnet} from 'viem/chains';
 import {createPublicClient, custom} from 'viem';
 export const retrieveFEncounterIDFunction = async (
   encounterIndexparams,
@@ -9,7 +9,7 @@ export const retrieveFEncounterIDFunction = async (
 ) => {
   try {
     const publicClient = createPublicClient({
-      chain: sepolia,
+      chain: fantomTestnet,
       transport: custom(provider),
       // transport: http(
       //   'https://sepolia.infura.io/v3/777255a92575483a9ec9116de0833863',

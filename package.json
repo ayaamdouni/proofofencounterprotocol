@@ -29,7 +29,8 @@
     "react-native-svg": "^15.2.0",
     "react-native-vector-icons": "^10.1.0",
     "viem": "^1.21.4",
-    "wagmi": "^1.4.13"
+    "wagmi": "^1.4.13",
+    "web3": "^4.9.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",

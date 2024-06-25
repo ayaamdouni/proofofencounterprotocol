@@ -11,10 +11,12 @@ import {
 
 const SearchingLoader = () => {
   return (
-    <View style={styles.shadowStyle}>
-      <View style={styles.shadowStyle1}>
-        <View style={styles.shadowStyle2}>
-          <Text>Scanning</Text>
+    <View style={styles.shadowmainStyle}>
+      <View style={styles.shadowStyle}>
+        <View style={styles.shadowStyle1}>
+          <View style={styles.shadowStyle2}>
+            <Text style={styles.textStyle}>SCANNING...</Text>
+          </View>
         </View>
       </View>
     </View>
@@ -22,6 +24,18 @@ const SearchingLoader = () => {
 };
 
 const styles = StyleSheet.create({
+  shadowmainStyle: {
+    height: 240,
+    width: 240,
+    backgroundColor: 'transparent',
+    alignSelf: 'center',
+    borderRadius: 120,
+    borderWidth: 3,
+    borderColor: '#2234AE',
+    elevation: 200,
+    // color: 'black',
+    justifyContent: 'center',
+  },
   shadowStyle: {
     height: 200,
     width: 200,
@@ -29,8 +43,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 100,
     borderWidth: 3,
-    borderColor: 'black',
-    elevation: 80,
+    borderColor: '#2234AE',
+    // elevation: 200,
     // color: 'black',
     justifyContent: 'center',
   },
@@ -41,9 +55,10 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 170 / 2,
     borderWidth: 3,
-    borderColor: 'black',
+    borderColor: '#2234AE',
     justifyContent: 'center',
-    // elevation: 70,
+    opacity: 0.7,
+    // elevation: 90,
     // color: 'black',
   },
   shadowStyle2: {
@@ -52,12 +67,20 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: 140 / 2,
     borderWidth: 3,
-    borderColor: 'black',
+    borderColor: '#91A6FF',
+    // borderColor: '#40c9ff',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    opacity: 0.7,
     // elevation: 70,
-    backgroundColor: 'black',
+    backgroundColor: '#91A6FF',
+  },
+  textStyle: {
+    fontSize: 15,
+    fontFamily: 'monospace',
+    color: 'white',
+    fontWeight: 'bold'
   },
 });
 

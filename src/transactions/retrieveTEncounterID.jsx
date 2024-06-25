@@ -1,5 +1,5 @@
 import {ContractABI} from '../Contract/contractABI';
-import {mainnet, sepolia} from 'viem/chains';
+import {mainnet, sepolia, fantomTestnet} from 'viem/chains';
 import {createPublicClient, custom} from 'viem';
 
 
@@ -11,7 +11,7 @@ export const retrieveTEncounterIDFunction = async (
 ) => {
   try {
     const publicClient = createPublicClient({
-      chain: sepolia,
+      chain: fantomTestnet,
       transport: custom(provider),
       // transport: http(
       //   'https://sepolia.infura.io/v3/777255a92575483a9ec9116de0833863',
@@ -37,7 +37,7 @@ export const retrieveTEncounterIDFunction = async (
         ],
       })
       .catch(err => console.log('erreur', err));
-    console.log('result of retrieve TEncounterID', data);
+    console.log('result of retrieveTEncounterID', data);
     return data;
   } catch (error) {
     console.error('error in retrieving TEncounterID', error);

@@ -2,9 +2,9 @@ const crypto = require('crypto');
 const fs = require("fs");
 const publicKeyA = fs.readFileSync("Keys/publicA.pem", { encoding: 'utf-8' });
 
-function encrypt (didB, TencounterID, incrementalIndexB, publicKey1) {
+function encrypt (didB, TencounterID, incrementalIndexB, bTimestamp, publicKey1) {
     console.log('encrypting data called');
-    const buffer = Buffer.from(didB + ':' + TencounterID + ':' + incrementalIndexB);
+    const buffer = Buffer.from(didB + ':' + TencounterID + ':' + incrementalIndexB + ':' + bTimestamp);
     const publicKey = publicKeyA;
 
     const encryptedData = crypto.publicEncrypt(

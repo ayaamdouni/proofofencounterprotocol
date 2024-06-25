@@ -4,6 +4,7 @@ export const encrypt = async (
   didB,
   TencounterID,
   incrementalIndexB,
+  bTimestamp,
   publicKey,
 ) => {
   try {
@@ -11,10 +12,11 @@ export const encrypt = async (
       didB: didB,
       TencounterID: TencounterID,
       incrementalIndexB: incrementalIndexB,
+      bTimestamp: bTimestamp,
       publicKey: publicKey,
     });
     const encrypted = response.data.encryptedData;
-    console.log('encrypted Data received: ', encrypted);
+    console.log('Data encrypted received: ', encrypted);
     return encrypted;
   } catch (error) {
     console.error('Error in encrypting data:', error);

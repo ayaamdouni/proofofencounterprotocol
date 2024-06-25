@@ -1,9 +1,10 @@
 import {ContractABI} from '../Contract/contractABI';
-import {createWalletClient, custom} from 'viem';
+import {createWalletClient, custom, createPublicClient} from 'viem';
 import {mainnet, sepolia, fantomTestnet} from 'viem/chains';
 import {NativeModules} from 'react-native';
 import {encrypt} from '../services/encrypt';
 import {signMessage} from '../services/signMessage';
+import {privateKeyToAccount} from 'viem/accounts';
 const {NearbyConnectionModule} = NativeModules;
 export const initEncounter = async (
   provider,
@@ -13,20 +14,30 @@ export const initEncounter = async (
   bTimestampparams,
   connectedEndpoint,
   localIncrementalIndexB,
+  initStart,
 ) => {
   const signedTEncounterID = await signMessage(
     TEncounterIDparams.toString(),
     'privateKeyB',
   );
+  const account = privateKeyToAccount(
+    '0x02f9bbbbd406558a9fa10d1ce7de14d663d29aa62981e3bd2a3fc2277d3e9a8a',
+  );
+  const publicClient = createPublicClient({
+    chain: fantomTestnet,
+    transport: custom(provider),
+  });
+  // console.log('the account of this private key is:', account);
   console.log(
     'params of init Tx: ',
     deviceAparams,
-    TEncounterIDparams,
+    signedTEncounterID,
     bTimestampparams,
   );
   try {
     const walletClient = createWalletClient({
-      chain: sepolia,
+      account,
+      chain: fantomTestnet,
       transport: custom(provider),
     });
     const hash = await walletClient.writeContract({
@@ -34,9 +45,13 @@ export const initEncounter = async (
       abi: ContractABI,
       functionName: 'initEncounter',
       args: [deviceAparams, signedTEncounterID, bTimestampparams],
-      account: address,
+      account: account,
     });
-    console.log('hash of init Tx:', hash);
+    const transaction = await publicClient.waitForTransactionReceipt({
+      hash: hash,
+    });
+    // console.log('The init Encounter TX is mined with success: ', transaction);
+    // console.log('hash of init Tx:', hash);
     console.log(
       'data to be encrypted after init',
       address,
@@ -47,8 +62,14 @@ export const initEncounter = async (
       address,
       TEncounterIDparams,
       localIncrementalIndexB,
+      bTimestampparams,
       'publicKeyA',
     );
+
+    const initEnd = new Date();
+    // console.log('the date of starting init Tx is:', initStart);
+    // console.log('the date of ending init Tx is:', initEnd);
+    console.log('the duration of init Tx part is', initEnd - initStart);
     NearbyConnectionModule.sendData(
       '2',
       connectedEndpoint,

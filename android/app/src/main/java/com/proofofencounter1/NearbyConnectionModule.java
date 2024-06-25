@@ -49,7 +49,8 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
 	private boolean mIsAdvertising = false;
 	private final ReactApplicationContext reactContext;
     private final String SERVICE_ID = "com.nearbymod.SERVICE_ID";
-    private final Strategy STRATEGY = Strategy.P2P_STAR;
+    // private final Strategy STRATEGY = Strategy.P2P_STAR;
+    private final Strategy STRATEGY = Strategy.P2P_CLUSTER;
     private final List<String> messagesSent = new ArrayList<>();
 	private String endpointConnected = "";
 	private String receivedMessages = "";
@@ -90,6 +91,10 @@ public class NearbyConnectionModule extends ReactContextBaseJavaModule {
     @ReactMethod
     public void invokeEventNumber(Callback callback) {
         callback.invoke(eventNumber);
+    }
+    @ReactMethod
+    public void disconnectFromEndpoint(String endpointId) {
+        Nearby.getConnectionsClient(reactContext).disconnectFromEndpoint(endpointId);
     }
     @ReactMethod
 	public void startDiscovering(final String adresse, final String timestampA, final Double localIncrementalIndex) {

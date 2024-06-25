@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/Jersey10-Regular.ttf",
+      "sha1": "b58b2e448cec057ac0911e15fe394c6f0b02beac"
+    },
+    {
+      "path": "assets/fonts/Jersey_10/OFL.txt",
+      "sha1": "49097180f437f392a7d1fd111653e48ae3d5ce8e"
+    }
+  ]
+}

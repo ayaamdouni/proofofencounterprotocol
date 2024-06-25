@@ -19,8 +19,8 @@ app.post('/verifySign', (req, res) => {
     res.json({verifingResult});
 });
 app.post('/encrypt', (req, res) => {
-    const {didB, TencounterID, incrementalIndexB, publicKey} = req.body;
-    const encryptedData = encrypt(didB, TencounterID, incrementalIndexB, publicKey);
+    const {didB, TencounterID, incrementalIndexB, bTimestamp, publicKey} = req.body;
+    const encryptedData = encrypt(didB, TencounterID, incrementalIndexB, bTimestamp, publicKey);
     res.json({encryptedData});
 });
 app.post('/encryptData', (req, res) => {
